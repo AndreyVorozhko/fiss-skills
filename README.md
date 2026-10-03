@@ -1,41 +1,44 @@
 # FISS Skills
 
-Набор агентных навыков (Agent Skills) для работы с интеллектуальными пространствами по стандарту [FISS (File-based Intellectual Space Standard)](https://fiss.vorozhko.ru/).
+[Русский](README.ru.md) | **English**
 
-Репозиторий входит в экосистему инструментов FISS вместе со статическим анализатором [fiss-lint](https://github.com/AndreyVorozhko/fiss-lint).
+A collection of Agent Skills for working with intellectual spaces under the [FISS (File-based Intellectual Space Standard)](https://fiss.vorozhko.ru/en/).
+
+This repository is part of the FISS tooling ecosystem alongside the [fiss-lint](https://github.com/AndreyVorozhko/fiss-lint) static analyzer.
 
 ---
 
-## Навыки в репозитории
+## Skills in Repository
 
 ### 1. [`fiss-maintain`](fiss-maintain/SKILL.md)
-**Оператор и мутатор пространства.** Отвечает за непрерывность контекста и структурную целостность FISS при выполнении задач.
+**Space operator and mutator.** Responsible for context continuity and structural integrity of the FISS space across tasks.
 
-* **Инициализация:** развёртывание минимальной конформной структуры FISS (`FISS/INDEX.md`, `BOOTSTRAP.md`, протокол handoff), если пространство отсутствует.
-* **Интеграция изменений:** правильное размещение новых знаний, построение навигационных индексов с условиями чтения (`Read when:`), маркировка производных материалов (`Derived from:`).
-* **Управление контекстом (Handoff):** фиксация состояний синхронизации (`pending` / `synchronized` / `unresolved`) между задачами агентов.
+* **Initialization:** Scaffolds the minimal conforming FISS structure (`FISS/INDEX.md`, `BOOTSTRAP.md`, handoff protocol) when absent.
+* **Integrating Changes:** Places new knowledge correctly, builds navigation indexes with situational triggers (`Read when:`), and marks derived representations (`Derived from:`).
+* **Context Continuity (Handoff):** Manages task transition states (`pending` / `synchronized` / `unresolved`) between agent runs.
 
 ### 2. [`fiss-validate`](fiss-validate/SKILL.md)
-**Строго read-only инспектор и аудитор.** Проверяет соответствие пространства спецификации FISS и 7 архитектурным принципам (7C).
+**Strictly read-only auditor.** Verifies space conformance against the FISS specification and its [7 architectural principles (7C)](https://fiss.vorozhko.ru/v1.0.0/en/intellectual-space.html#principles).
 
-* **Доказательная верификация:** аудит достижимости областей знаний, непротиворечивости источников, валидности переопределений (`FISS/overrides/`) и протокола передачи контекста.
-* **Пятистатусная модель вердикта:** классификация находок (`VERIFIED`, `FAILED`, `UNRESOLVED`, `INSUFFICIENT_EVIDENCE`, `ADVISORY`) с точными ссылками на строки.
-* **Интеграция с `fiss-lint`:** автоматическое делегирование механических и синтаксических проверок утилите `fiss-lint` с фокусом навыка на семантическом аудите.
+* **Evidence-Based Audit:** Verifies reachability of used areas, consistency of canonical sources, validity of overrides (`FISS/overrides/`), and adherence to the handoff protocol.
+* **Five-Status Model:** Classifies findings into granular verdicts (`VERIFIED`, `FAILED`, `UNRESOLVED`, `INSUFFICIENT_EVIDENCE`, `ADVISORY`) with exact file and line citations.
+* **Tooling Delegation:** Offloads deterministic mechanical checks to the `fiss-lint` CLI, focusing on semantic evaluation.
 
 ---
 
-## Разделение ответственности в тулинге
+## Division of Responsibility
 
-| Инструмент | Роль | Изменяет файлы? | Что делает |
+| Tool | Role | Mutates files? | Responsibility |
 |---|---|:---:|---|
-| **[fiss-lint](https://github.com/AndreyVorozhko/fiss-lint)** | CLI-линтер | Нет | Детерминированные механические проверки структуры, путей, синтаксиса и обязательных маркеров |
-| **`fiss-validate`** | AI-навык аудита | Нет | Семантический анализ, аудит целостности контекста и доказательная проверка принципов стандарта |
-| **`fiss-maintain`** | AI-навык ведения | **Да** | Инициализация FISS, интеграция результатов задач, обновление навигации и сохранение непрерывности |
+| **[fiss-lint](https://github.com/AndreyVorozhko/fiss-lint)** | CLI linter | No | Deterministic mechanical checks: paths, syntax, link validity, and required markers |
+| **`fiss-validate`** | AI audit skill | No | Semantic audit, context integrity, and evidence-backed verification of architectural principles |
+| **`fiss-maintain`** | AI maintenance skill | **Yes** | Initializes FISS, integrates task outcomes, updates navigation, and preserves continuity |
 
 ---
 
-## Ссылки
+## Links
 
-* [Стандарт FISS](https://fiss.vorozhko.ru/)
+* [FISS Standard](https://fiss.vorozhko.ru/en/)
+* [7 Architectural Principles (7C)](https://fiss.vorozhko.ru/v1.0.0/en/intellectual-space.html#principles)
 * [fiss-lint CLI](https://github.com/AndreyVorozhko/fiss-lint)
-* [Лицензия (MIT)](LICENSE)
+* [License (MIT)](LICENSE)
