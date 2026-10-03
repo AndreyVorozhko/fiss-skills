@@ -1,12 +1,110 @@
 # Examples
 
-## Reading contract
+## Reading Contract
 
-Read this file when a maintenance case is ambiguous or when preparing a handoff report. Skip it when `SKILL.md` directly determines the action. These examples illustrate the contract and add no normative requirements.
+Read this file when a maintenance case is ambiguous, when configuring the three-phase handoff gate, or when preparing a handoff report. Skip it when `SKILL.md` directly determines the action. These examples illustrate the contract and add no normative requirements.
 
-## No FISS change
+---
 
-A formatting-only source-code change does not alter project knowledge, current state, rules, navigation, or task context. When that FISS-independent classification is supported by project evidence, classify the task result as no persistence and report:
+## Example 1: Three-Phase Git-Committed Gate Lifecycle (Human Confirmation Policy)
+
+In a project where `FISS/overrides/handoff.md` mandates human confirmation before opening the gate:
+
+### Phase 1: Lock (Before Starting Task Implementation)
+1. Update `FISS/state/fiss-handoff.md`:
+   ```markdown
+   # FISS Task Handoff
+
+   task: https://taiga.example.com/project/myproject/us/51
+   task status: in_progress
+   fiss synchronization: pending
+   ```
+2. Commit immediately before authoring substantive code:
+   ```bash
+   git add FISS/state/fiss-handoff.md
+   git commit -m "chore(handoff): close transition gate (fiss synchronization: pending) . T-51"
+   ```
+
+### Implementation Phase
+- Implement task code, write tests, author documentation commits.
+
+### Phase 2: Prepare (Context Refresh & Verification)
+1. Conduct 7-point context refresh audit.
+2. Update FISS knowledge documents.
+3. Run verification:
+   ```bash
+   fiss-lint --strict .
+   # Output: clean (exit code 0)
+   ```
+4. Update `FISS/state/fiss-handoff.md` with classified outcomes:
+   ```markdown
+   # FISS Task Handoff
+
+   task: https://taiga.example.com/project/myproject/us/51
+   task status: in_progress
+   fiss synchronization: pending
+
+   ## Outcomes Summary
+   - Capture here: Updated FISS/knowledge/project/architecture.md and workflow.md
+   - Delegate: None
+   - No persistence: Routine install scripts test
+   ```
+5. Commit the prepared outcomes:
+   ```bash
+   git add FISS/
+   git commit -m "chore(handoff): prepare context refresh and outcomes (pending confirmation) . T-51"
+   ```
+6. Present the Human Review Surface to the operator and await explicit approval. Do NOT open the gate autonomously!
+
+### Phase 3: Release (Upon Receiving Human Confirmation)
+1. Upon user saying "Task approved / Задачу принимаю":
+2. Update `FISS/state/fiss-handoff.md`:
+   ```markdown
+   # FISS Task Handoff
+
+   task: https://taiga.example.com/project/myproject/us/51
+   task status: completed
+   fiss synchronization: synchronized
+   ```
+3. Commit the opened gate:
+   ```bash
+   git add FISS/state/fiss-handoff.md
+   git commit -m "chore(handoff): open transition gate (fiss synchronization: synchronized) . T-51"
+   ```
+
+---
+
+## Example 2: Three-Phase Gate Lifecycle (Standard Autonomous Flow)
+
+In a project without human confirmation overrides:
+
+1. **Phase 1 (Lock):** Update `fiss-handoff.md` to `pending` and author lock commit.
+2. **Implementation:** Author code and tests.
+3. **Phase 2 (Prepare):** Audit 7 context dimensions, verify via `fiss-lint --strict .`, stage outcomes in `fiss-handoff.md`. Evaluates gate release policy $\rightarrow$ autonomous release permitted.
+4. **Phase 3 (Release):** Update `fiss-handoff.md` to `synchronized` and `task status: completed`, author concluding release commit:
+   ```bash
+   git add FISS/
+   git commit -m "chore(handoff): open transition gate (fiss synchronization: synchronized) . T-50"
+   ```
+
+---
+
+## Example 3: Invocation on Uninitialized Repository
+
+When `fiss-maintain` is invoked in a repository lacking `FISS/INDEX.md`:
+
+```text
+Status: BLOCKED
+Finding: FISS NOT INITIALIZED
+Evidence: FISS/INDEX.md not found in repository root.
+Remedy Hint: Invoke skill `fiss-init` to bootstrap a conforming FISS space.
+```
+
+---
+
+## Example 4: No FISS Change
+
+A formatting-only source-code change does not alter project knowledge, current state, rules, navigation, or task context:
 
 ```text
 FISS change: not required
@@ -14,13 +112,18 @@ Synchronization: synchronized
 Reason: no durable result or affected FISS invariant identified
 ```
 
-This task may be reported as synchronized without a FISS mutation when the classification is supported. Before a different independent task starts, its identity is recorded with state `pending`. No separate FISS-independent exception is needed to apply the standard fallback.
+---
 
-## Delegated semantic content
+## Example 5: Delegated Semantic Content
 
-An architecture decision belongs to an ADR owner. Classify it as `Delegate`, send the decision content to that skill, and integrate the resulting ADR into the applicable FISS index. Do not invent the decision or duplicate it in `state/`.
+An architecture decision belongs to an ADR owner:
+1. Classify as `Delegate`.
+2. Hand decision content to `adr-maintain`.
+3. Integrate the resulting ADR into `FISS/state/adr/INDEX.md`.
 
-## Single-file to composite migration
+---
+
+## Example 6: Single-File to Composite Migration
 
 ```text
 Preserve: old content, all backlinks, read condition, historical meaning
@@ -28,11 +131,13 @@ Change: create area/INDEX.md, extract coherent child documents, repoint links
 Acceptable loss: none without project approval
 ```
 
-Keep the old file until link and reachability evidence proves the new index is the live route. Then contract according to project policy.
+Keep old file until link and reachability evidence proves the new index is live. Then contract according to project policy.
 
-## Canonical conflict
+---
 
-If an external tracker and `FISS/state/` disagree and no source rule exists, report:
+## Example 7: Canonical Conflict
+
+If an external tracker and `FISS/state/` disagree and no source rule exists:
 
 ```text
 CONFLICT DETECTED
@@ -43,32 +148,9 @@ Mutation: blocked
 
 Do not merge the values or select the newer file by timestamp.
 
-## Derived representation
+---
 
-When a stakeholder architecture map summarizes several existing sources, place it in `FISS/human/hmm/` and include:
-
-```markdown
-Derived from:
-- [System architecture](../../knowledge/project/architecture.md)
-- [Billing domain](../../knowledge/subject/billing.md)
-```
-
-Do not add a separate canonical marker. If the architecture source later changes, treat the map as requiring review rather than silently maintaining both descriptions independently.
-
-## Verification report
-
-```text
-Synchronization: synchronized
-FISS conformance: verified
-FISS change: applied
-Principle 6 continuity mechanism: not applicable (maintain mode)
-Evidence: fiss-lint --strict . (exit code 0: clean), backlink check
-Affected paths: FISS/INDEX.md, FISS/knowledge/project/area/INDEX.md
-```
-
-Use `UNRESOLVED` when a required check was not run or a required decision remains open.
-
-## Verification failure and repair
+## Example 8: Verification Failure and Repair
 
 When `fiss-lint` reports broken invariants after a mutation:
 
@@ -86,65 +168,3 @@ fiss-lint --strict .
 # Output: clean
 # Exit code: 0
 ```
-
-## Initialization with autonomous Principle 6 continuity mechanism
-
-When initializing a new FISS intellectual space where the user or project has not specified a custom Handoff Gate or context refresh protocol:
-
-1. `fiss-maintain` creates conforming root files (`FISS/INDEX.md`, `FISS/BOOTSTRAP.md`), resolves `FISS/state/fiss-handoff.md`, and inspects project workflows.
-2. It detects no custom context-refresh gate, and autonomously establishes the standard 7-point audit checklist in `workflow.md` (or `FISS/overrides/` / `FISS/BOOTSTRAP.md`).
-3. It scaffolds `FISS/state/fiss-handoff.md` with the 3 outcome classes and checklist items.
-4. It runs `fiss-lint --strict .` to prove structural compliance.
-5. It outputs an explicit notice and report:
-
-```text
-Synchronization: synchronized
-FISS conformance: verified
-FISS change: applied
-Principle 6 continuity mechanism: established (workflow.md, FISS/state/fiss-handoff.md)
-Notice: Standard 7-point pre-synchronization audit checklist autonomously established to satisfy FISS Principle 6 (Continuous: timely capturing and preserving useful context changes).
-Evidence: fiss-lint --strict . (exit 0); created FISS/INDEX.md, FISS/BOOTSTRAP.md, FISS/state/fiss-handoff.md; updated workflow.md
-Affected paths: FISS/INDEX.md, FISS/BOOTSTRAP.md, FISS/state/fiss-handoff.md, workflow.md
-```
-
-## Two-Phase Git-Committed Gate Lifecycle
-
-### Phase 1: Closing the Gate (Before Starting Task Work)
-Before authoring code or task commits:
-1. Update `FISS/state/fiss-handoff.md`:
-   ```markdown
-   task: https://tracker.example.com/issue/123
-   task status: in_progress
-   fiss synchronization: pending
-   ```
-2. Immediately commit the closed gate:
-   ```bash
-   git add FISS/state/fiss-handoff.md
-   git commit -m "chore(handoff): close transition gate (fiss synchronization: pending) . T-123"
-   ```
-
-### Phase 2: Opening the Gate (Upon Task Completion)
-After code implementation, verification (`fiss-lint --strict`), and 7-point context refresh audit:
-1. Update `FISS/state/fiss-handoff.md`:
-   ```markdown
-   task: https://tracker.example.com/issue/123
-   task status: completed
-   fiss synchronization: synchronized
-   ```
-2. Commit the opened gate with outcome records:
-   ```bash
-   git add FISS/state/fiss-handoff.md
-   git commit -m "chore(handoff): open transition gate (fiss synchronization: synchronized) . T-123"
-   ```
-
-## Blocking handoff
-
-When synchronization is blocked by a decision, record `unresolved`. If outcomes simply remain to be integrated or checked, keep the state `pending`:
-
-```text
-fiss synchronization: unresolved
-current work: <canonical work-item reference>
-blocker: <decision that must be made>
-```
-
-Continue the identified work while it is `pending`. Do not start a different independent work item from `pending` or `unresolved`; low risk alone does not change the state.

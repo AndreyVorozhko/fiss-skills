@@ -21,12 +21,12 @@ The primary mission:
 
 ### Division of Responsibility
 
-| Dimension | `fiss-maintain` | `fiss-validate` |
-|---|---|---|
-| **Role** | Operational continuity & mutator | Impartial inspector & verifier |
-| **Question** | What changed? What to persist? How to repair? | Does existing space conform? Is context discoverable? |
-| **File system** | Mutates files, updates navigation, maintains handoff | Strictly read-only; zero filesystem mutations |
-| **Output** | Synchronized space & handoff artifact | Evidence-based findings & diagnostic payload |
+| Dimension | `fiss-init` | `fiss-maintain` | `fiss-validate` |
+|---|---|---|---|
+| **Role** | 0-to-1 space bootstrapper | Operational continuity & mutator | Impartial inspector & verifier |
+| **Question** | How to bootstrap a conforming space? | What changed? What to persist? How to repair? | Does existing space conform? Is context discoverable? |
+| **File system** | Scaffolds initial root files & baseline | Mutates files, updates navigation, maintains handoff | Strictly read-only; zero filesystem mutations |
+| **Output** | Initialized FISS space & baseline report | Synchronized space & handoff artifact | Evidence-based findings & diagnostic payload |
 
 ---
 

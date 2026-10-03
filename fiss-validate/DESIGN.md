@@ -19,9 +19,11 @@ FISS architecture strictly separates concerns across three tooling layers to eli
    - Provisions and invokes `fiss-lint --format json` for mechanical checks.
    - Audits Level 2 semantic heuristics (7C principles): situational trigger clarity, index content leakage, information classification, canonical duplication & drift, and continuous maintenance mechanisms.
    - Synthesizes a unified report combining mechanical findings from `fiss-lint` and semantic findings from cognitive evaluation.
-3. **`fiss-maintain` (Agent Skill / Operational Mutator & Continuity Orchestrator)**:
-   - Stateful lifecycle mutator.
-   - Preserves continuity across tasks: classifies task outcomes (`Capture here`, `Delegate`, `No persistence`), synchronizes knowledge, and executes minimal scoped migrations.
+3. **`fiss-init` (Agent Skill / 0-to-1 Bootstrapper)**:
+   - Scaffolds initial root structure (`FISS/INDEX.md`, `BOOTSTRAP.md`), handoff representation, and Principle 6 continuity mechanism from scratch.
+4. **`fiss-maintain` (Agent Skill / Operational Mutator & Continuity Orchestrator)**:
+   - Stateful Day 2 lifecycle mutator.
+   - Manages the three-phase Git-committed handoff gate (Lock -> Prepare -> Release), classifies task outcomes (`Capture here`, `Delegate`, `No persistence`), synchronizes knowledge, and executes minimal scoped migrations.
    - Enforces the post-mutation verification gate by running `fiss-lint --strict` (and invoking `fiss-validate` for broad structural changes).
 
 ```text
