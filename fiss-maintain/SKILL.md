@@ -32,10 +32,10 @@ Use this skill in one of two modes:
 - The component that changes structure owns migration of its consumers. Do not leave backlinks or navigation repair to a later task.
 - Do not mutate project policy, authority, autonomy, approval, escalation, required checks, or other semantic behavior in `FISS/overrides/` without the project's required human approval.
 - Do not claim synchronization or conformance without fresh verification evidence. Static reasoning and an intended command are not evidence.
-- Every conforming FISS space supports the standard handoff states, but a dedicated file or fixed path is not required. Resolve one logical handoff record using the operational-artifact cascade; `FISS/state/fiss-handoff.md` is only the default when no project mechanism or repository convention resolves another location.
-- Before starting any new independent task, determine the state in the resolved handoff. Follow an applicable project-defined transition mechanism. If none exists, from `synchronized` record the current work as `pending` before substantive work; from `pending`, continue only the work item already identified there; from `unresolved`, do not start different work until the blocker is resolved. If state or work identity cannot be determined, stop and resolve the ambiguity. Do not mistake continuation for a new task.
-- A completed task remains `pending` until FISS-relevant outcomes are captured, delegated, or explicitly classified as requiring no persistence. Set `synchronized` only when the space is ready for another independent task; use `unresolved` when a decision is required. Do not infer synchronization from task completion, low risk, or confidence.
-- Principle 6 Initialization Invariant: When initializing a new FISS intellectual space, if the user has not specified a custom Handoff Gate & Intellectual Space Refresh mechanism, fiss-maintain MUST autonomously introduce a standard, robust mechanism adapted to the project context (in workflow documentation, overrides, agent entry files, or handoff templates) to satisfy FISS Principle 6 (Continuous: timely capturing and preserving useful context changes), and explicitly notify the user in the initialization report.
+- Two-Phase Git-Committed Transition Gate Invariant: Every transition of the FISS handoff gate MUST be immutably recorded in version control via an atomic Git commit:
+  1. **Gate Closure (Before Task Implementation):** Before starting substantive work or authoring any implementation commits for a new independent task, transition the handoff record from `synchronized` to `pending` (declaring the new canonical task identity and `task status: in_progress`) and **immediately author an atomic Git commit recording the closed gate** (e.g., `chore(handoff): close transition gate (pending) . T-<id>`). Leaving `fiss synchronization: pending` uncommitted in the working tree across implementation commits is strictly prohibited. From `pending`, continue only the work item already identified there; from `unresolved`, do not start different work until the blocker is resolved. If state or work identity cannot be determined, stop and resolve the ambiguity. Do not mistake continuation for a new task.
+  2. **Gate Opening (Upon Task Completion & Verification):** A completed task remains `pending` until FISS-relevant outcomes are captured, delegated, or explicitly classified as requiring no persistence, and fresh evidence from `fiss-lint --strict` confirms zero defects. Only then transition the handoff record to `synchronized` (with `task status: completed`) and **immediately author an atomic Git commit recording the opened gate and refreshed outcomes** (e.g., `chore(handoff): open transition gate (synchronized) . T-<id>`). Use `unresolved` when a decision is required. Do not infer synchronization from task completion, low risk, or confidence.
+- Principle 6 Initialization Invariant: When initializing a new FISS intellectual space, if the user has not specified a custom Handoff Gate & Intellectual Space Refresh mechanism, fiss-maintain MUST autonomously introduce a standard, robust mechanism adapted to the project context (in workflow documentation, overrides, agent entry files, or handoff templates) to satisfy FISS Principle 6 (Continuous: timely capturing and preserving useful context changes). This mechanism MUST prescribe the mandatory two-phase Git-committed handoff gate protocol: (1) closing the gate with an atomic Git commit (`fiss synchronization: pending`) before starting task implementation, and (2) opening the gate with an atomic Git commit (`fiss synchronization: synchronized`) upon completing the 7-point context refresh audit. fiss-maintain MUST explicitly notify the user in the initialization report.
 - Mechanical verification of the intellectual space is delegated to `fiss-lint` (or `fiss-validate`). `fiss-maintain` MUST NOT perform manual link-by-link checking or duplicate linter rules; before declaring a space synchronized, run `fiss-lint --strict` (or `fiss-validate`) to obtain fresh observable verification evidence.
 
 ## Establish
@@ -56,7 +56,7 @@ Probe the environment before assuming paths or tooling.
 3. Check whether `FISS/` exists and whether its root files are present. If FISS exists, inspect the root index, bootstrap, applicable overrides, and only the linked branches needed for this task.
 4. Record a read-only baseline before mutation: relevant status/diff, affected paths, and observable evidence. Do not overwrite unrelated user changes.
 5. If the baseline is ambiguous, an applicable rule is unavailable, or a source conflict is found, stop the affected mutation and report the ambiguity.
-6. Before a new independent task, determine the state using the resolved handoff representation. Apply an applicable project-defined transition mechanism; otherwise, from `synchronized`, record the new work as `pending` before substantive work. From `pending`, proceed only as a continuation of its identified work. From `unresolved`, stop different independent work until the required resolution. Do not create a duplicate record if no artifact exists at the expected path; resolve the logical representation first. If the record or state cannot be determined, stop and report the uncertainty.
+6. Before a new independent task, determine the state using the resolved handoff representation. Apply an applicable project-defined transition mechanism; otherwise, from `synchronized`, transition the handoff record to `pending` before substantive work, and **immediately author an atomic Git commit recording the closed gate (`fiss synchronization: pending`)**. From `pending`, proceed only as a continuation of its identified work. From `unresolved`, stop different independent work until the required resolution. Do not leave the pending handoff uncommitted in the working tree across implementation commits. Do not create a duplicate record if no artifact exists at the expected path; resolve the logical representation first. If the record or state cannot be determined, stop and report the uncertainty.
 
 ## Initialize
 
@@ -65,7 +65,7 @@ When `FISS/INDEX.md` or `FISS/BOOTSTRAP.md` is absent:
 1. Inspect the existing task workflow, canonical task/state source, and project entry points.
 2. Create only the minimum conforming root files, with `FISS/INDEX.md` linking to `FISS/BOOTSTRAP.md` and requiring it before project work.
 3. Resolve the logical FISS handoff representation using the operational-artifact cascade. If no project mechanism or repository convention exists, use `FISS/state/fiss-handoff.md` as the default representation and expose it from the applicable index. Record FISS synchronization state and a canonical work-item reference; do not create a competing task tracker. The standard agent fallback is sufficient; no enforcement infrastructure is required.
-4. Ensure the required agent entry context explains the transitions: a new independent task starts from `synchronized`, is recorded as `pending` before substantive work, and cannot start from `pending` or `unresolved`; the already identified work may continue from `pending`. A project may define another transition mechanism.
+4. Ensure the required agent entry context and workflow documentation explain the two-phase Git-committed transitions: a new independent task starts from `synchronized`, closes the gate by recording `pending` with an immediate Git commit before substantive work, and cannot start from `pending` or `unresolved`; the already identified work may continue from `pending`. A project may define another transition mechanism.
 5. If the project has `AGENTS.md` or another agent entry file, verify that it directs agents to `FISS/INDEX.md` and that the required entry workflow exposes the applicable transition rule before work begins. Hooks, CI, or wrappers are optional.
 6. If the user or project has not specified a custom Handoff Gate & Intellectual Space Refresh mechanism, establish a standard, robust mechanism adapted to the project context to satisfy FISS Principle 6 (Continuous: timely capturing and preserving useful context changes):
    - Define a mandatory pre-synchronization completion audit in the project workflow documentation (e.g. `workflow.md`), project overrides (`FISS/overrides/`), or agent entry context (`AGENTS.md` / `FISS/BOOTSTRAP.md`).
@@ -89,23 +89,47 @@ The handoff artifact records FISS synchronization, not a second task tracker. It
 
 ```text
 task: <canonical task reference>
-task status: completed
+task status: in_progress | completed
 fiss synchronization: pending | synchronized | unresolved
 ```
 
 Use these synchronization states and transitions:
 
 ```text
- synchronized -> new independent work recorded as pending
+ synchronized -> new independent work recorded as pending (GIT COMMIT: Gate Closed)
        ^                                  |
        |                                  | work completes; synchronize FISS outcomes
        |                                  v
-       +----------------------------- synchronized
+       +----------------------------- synchronized (GIT COMMIT: Gate Opened)
                                           |
                           blocker requiring decision -> unresolved
                                           |
                              resolution -> pending -> synchronized
 ```
+
+#### Two-Phase Git-Committed Gate Protocol
+
+To guarantee full auditability and prevent silent working-tree drift across tasks, transition gate state changes MUST be recorded in version control through atomic Git commits:
+
+1. **Closing the Gate (`pending`):**
+   - **Trigger:** Transitioning from `synchronized` to start work on a new independent task.
+   - **Action:** Update the handoff artifact (`task status: in_progress`, `fiss synchronization: pending`, pointing to the new canonical task reference).
+   - **Commit:** **Immediately author an atomic Git commit** before any substantive implementation commits:
+     ```bash
+     git add FISS/state/fiss-handoff.md
+     git commit -m "chore(handoff): close transition gate (fiss synchronization: pending)"
+     ```
+     *(In projects with task tracking conventions, use `<type>(<scope>): <summary> . T-<id>`, e.g., `chore(handoff): закрытие transition gate перед началом работы . T-50`)*.
+   - **Invariant:** It is strictly prohibited to leave `fiss synchronization: pending` uncommitted in the working tree across implementation commits.
+2. **Opening the Gate (`synchronized`):**
+   - **Trigger:** All constituent tasks, verifications (`fiss-lint --strict`), and durable context refresh (7-point audit) are complete.
+   - **Action:** Update the handoff artifact (`task status: completed`, `fiss synchronization: synchronized`, documenting outcomes across all 7 dimensions).
+   - **Commit:** **Author the concluding atomic Git commit**:
+     ```bash
+     git add FISS/state/fiss-handoff.md
+     git commit -m "chore(handoff): open transition gate (fiss synchronization: synchronized)"
+     ```
+     *(e.g., `chore(handoff): фиксация результатов Story #50 и открытие transition gate . T-62`)*.
 
 The record identifies the current work item or links to its external canonical identity; it does not own task status or a task backlog. Continue the identified work while `pending`; only a different independent work item is blocked. Write `synchronized` only when every FISS-relevant outcome is captured, delegated, or explicitly classified as requiring no persistence and applicable relationships are updated. `unresolved` blocks different independent work until the required decision. A project may define an alternate transition mechanism, but it cannot redefine the state meanings or imply synchronization while outcomes remain unaccounted for.
 

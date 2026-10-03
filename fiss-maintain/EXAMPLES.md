@@ -107,6 +107,36 @@ Evidence: fiss-lint --strict . (exit 0); created FISS/INDEX.md, FISS/BOOTSTRAP.m
 Affected paths: FISS/INDEX.md, FISS/BOOTSTRAP.md, FISS/state/fiss-handoff.md, workflow.md
 ```
 
+## Two-Phase Git-Committed Gate Lifecycle
+
+### Phase 1: Closing the Gate (Before Starting Task Work)
+Before authoring code or task commits:
+1. Update `FISS/state/fiss-handoff.md`:
+   ```markdown
+   task: https://tracker.example.com/issue/123
+   task status: in_progress
+   fiss synchronization: pending
+   ```
+2. Immediately commit the closed gate:
+   ```bash
+   git add FISS/state/fiss-handoff.md
+   git commit -m "chore(handoff): close transition gate (fiss synchronization: pending) . T-123"
+   ```
+
+### Phase 2: Opening the Gate (Upon Task Completion)
+After code implementation, verification (`fiss-lint --strict`), and 7-point context refresh audit:
+1. Update `FISS/state/fiss-handoff.md`:
+   ```markdown
+   task: https://tracker.example.com/issue/123
+   task status: completed
+   fiss synchronization: synchronized
+   ```
+2. Commit the opened gate with outcome records:
+   ```bash
+   git add FISS/state/fiss-handoff.md
+   git commit -m "chore(handoff): open transition gate (fiss synchronization: synchronized) . T-123"
+   ```
+
 ## Blocking handoff
 
 When synchronization is blocked by a decision, record `unresolved`. If outcomes simply remain to be integrated or checked, keep the state `pending`:

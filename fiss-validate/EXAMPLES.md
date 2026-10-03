@@ -224,6 +224,36 @@ fiss-lint --format json .
 - **Remedy Hint**: Re-organize navigation by rule subject using the strict two-line form: `- [Code Review Rules](code-review.md)` followed by `  Read when: conducting automated code reviews.`
 ```
 
+### FISS-SEM-CONT-001: Missing Handoff Gate Closure Rule (Continuous)
+
+```markdown
+### [FINDING-12] FISS-SEM-CONT-001: Missing Handoff Gate Closure Rule
+- **Source**: fiss-validate (semantic)
+- **Determination**: WARNING
+- **Severity**: WARNING
+- **Principle**: Continuous
+- **Location**: `FISS/knowledge/project/workflow.md:140`
+- **Quote**: `2. Ready -> In progress: Agent transitions story status to In progress...`
+- **Evidence**: Project workflow defines task transitions and handoff file, but lacks a mandatory rule requiring the handoff gate closure (`fiss synchronization: pending`) to be committed to Git before task implementation begins.
+- **Rule**: Principle Continuous requires an observable operational mechanism ensuring that context transitions are anchored; the transition gate MUST be closed with an atomic Git commit prior to authoring task code.
+- **Remedy Hint**: Update `workflow.md` or `FISS/overrides/` to mandate an atomic Git commit (`chore(handoff): close transition gate (fiss synchronization: pending)`) before task code commits.
+```
+
+### FISS-SEM-CONT-002: Bypassed Handoff Transition Gate (Continuous)
+
+```markdown
+### [FINDING-13] FISS-SEM-CONT-002: Bypassed Handoff Transition Gate
+- **Source**: fiss-validate (semantic)
+- **Determination**: WARNING
+- **Severity**: WARNING
+- **Principle**: Continuous
+- **Location**: `FISS/state/fiss-handoff.md:4`
+- **Quote**: `task status: in_progress, fiss synchronization: pending` (uncommitted working tree modification)
+- **Evidence**: Substantive implementation commits exist on the branch, while the pending handoff transition was left uncommitted in the working tree, bypassing Git-level transition gate tracking.
+- **Rule**: Hand-off transitions MUST be recorded in version control via atomic Git commits to provide an auditable timeline and prevent uncommitted state drift.
+- **Remedy Hint**: Author an atomic Git commit recording the closed transition gate before authoring further implementation commits.
+```
+
 ---
 
 ## 2. Sample Comprehensive Report

@@ -44,7 +44,13 @@ Canonicality is not assigned by area. One source owns particular knowledge, whil
 
 ## Handoff risk
 
-`synchronized`, `pending`, and `unresolved` are FISS synchronization states, not task statuses. The logical handoff may use an existing canonical state mechanism or one resolved operational artifact; `FISS/state/fiss-handoff.md` is only the default representation when no project path or convention applies. Task identity and status remain with their canonical source. A new independent work item from `synchronized` is recorded as `pending` before substantive work. The identified work may continue while `pending`; different independent work is blocked by `pending` or `unresolved`. Completion returns to `synchronized` only after FISS-relevant outcomes are accounted for. The standard agent fallback requires no hooks or CI, and the skill does not manufacture a competing registry.
+`synchronized`, `pending`, and `unresolved` are FISS synchronization states, not task statuses. The logical handoff may use an existing canonical state mechanism or one resolved operational artifact; `FISS/state/fiss-handoff.md` is only the default representation when no project path or convention applies. Task identity and status remain with their canonical source.
+
+To prevent silent working-tree drift, loss of state across branch context, or unobservable transitions, the transition gate operates through two distinct, observable Git commits:
+1. **Gate Closure Commit:** Before any substantive task code or documentation is authored, the transition from `synchronized` to `pending` is committed to Git. This prevents uncommitted state drift in working directories and provides an immutable timeline of when a task assumed control of the space. Leaving `pending` uncommitted across task execution is prohibited.
+2. **Gate Opening Commit:** Upon task completion, verified conformance (`fiss-lint --strict`), and durable context refresh (7-point audit), the transition from `pending` to `synchronized` is committed to Git, opening the gate for subsequent tasks.
+
+The identified work may continue while `pending`; different independent work is blocked by `pending` or `unresolved`. Completion returns to `synchronized` only after FISS-relevant outcomes are accounted for. The standard agent fallback requires no hooks or CI, and the skill does not manufacture a competing registry.
 
 ## Validation scope
 
