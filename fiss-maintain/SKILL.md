@@ -1,13 +1,21 @@
 ---
 name: fiss-maintain
-description: Maintains operational continuity and structural integrity of an existing FISS intellectual space across task changes. Manages the three-phase Git-committed handoff gate (Lock -> Prepare -> Release), integrates task outcomes across 7 context dimensions, updates navigation, and preserves canonical consistency. For initializing FISS from scratch, use fiss-init. Unlike fiss-validate, it mutates files and executes handoffs rather than performing read-only audits.
+description: Maintains operational continuity and structural integrity of an existing FISS intellectual space across task changes. Distinguishes FISS-relevant work (changing what the space represents) from operational work (using the space as context). Manages the three-phase Git-committed handoff gate for FISS-relevant outcomes, maintains work classification taxonomy, integrates outcomes across 7 context dimensions, updates navigation, and preserves canonical consistency. For initializing FISS from scratch, use fiss-init. Unlike fiss-validate, it mutates files and executes handoffs rather than performing read-only audits.
 ---
 
 # FISS Maintain
 
 ## Responsibility
 
-Maintain continuity between completed work and the project's FISS intellectual space. The skill owns integration into an existing space: placement, navigation, links, read conditions, reachability, canonical-source clarity, and synchronization evidence across task lifecycles. A specialized skill owns domain content; `fiss-maintain` does not decide domain truth, architecture, risk acceptance, ADR content, or open-question semantics.
+Maintain continuity between completed work and the project's FISS intellectual space. The skill owns integration into an existing space: placement, navigation, links, read conditions, reachability, canonical-source clarity, work classification taxonomy, and synchronization evidence across task lifecycles.
+
+**Core distinction:** FISS v1.0.0 distinguishes **FISS-relevant work** (changes what the intellectual space represents and preserves) from **operational work** (uses the space as context without changing it). This skill:
+- Classifies completed work as FISS-relevant or operational
+- Applies the three-phase Git-committed handoff gate and 7-point context refresh audit ONLY to FISS-relevant work
+- Maintains `FISS/knowledge/project/work-classification.md` with project-specific work classes and examples
+- Discovers and documents new work classes as they emerge
+
+A specialized skill owns domain content; `fiss-maintain` does not decide domain truth, architecture, risk acceptance, ADR content, or open-question semantics.
 
 This skill operates strictly on an **existing FISS intellectual space**. If the repository does not yet have a conforming FISS entry point (`FISS/INDEX.md` and `FISS/BOOTSTRAP.md` are absent), halt immediately and instruct the caller to invoke **`fiss-init`**.
 
@@ -29,7 +37,9 @@ This skill operates strictly on an **existing FISS intellectual space**. If the 
 - The component that changes structure owns migration of its consumers. Do not leave backlinks or navigation repair to a later task.
 - Do not mutate project policy, authority, autonomy, approval, escalation, required checks, or other semantic behavior in `FISS/overrides/` without the project's required human approval.
 - Do not claim synchronization or conformance without fresh verification evidence. Static reasoning and an intended command are not evidence.
-- **Three-Phase Git-Committed Transition Gate Invariant:** Every transition of the FISS handoff gate MUST be immutably recorded in version control via an atomic Git commit:
+- **FISS-Relevant Outcome Classification Invariant:** Before applying the three-phase handoff gate, classify the completed work. A **FISS-relevant outcome** changes information, rules, state, or relationships that the intellectual space represents and preserves. **Operational work** uses the intellectual space as context without changing what it represents. The three-phase handoff gate and 7-point context refresh audit apply ONLY to FISS-relevant work. Operational work leaves the synchronization state unchanged. Consult `FISS/knowledge/project/work-classification.md` when it exists; if the work class is ambiguous or novel, update that document with the discovered pattern.
+- **Work Classification Maintenance Invariant:** When discovering a new work class or pattern (FISS-relevant or operational), update `FISS/knowledge/project/work-classification.md` with the work type, description, examples, and classification decision. This enables agents to classify future work correctly.
+- **Three-Phase Git-Committed Transition Gate Invariant (for FISS-Relevant Work Only):** Every transition of the FISS handoff gate for FISS-relevant work MUST be immutably recorded in version control via an atomic Git commit:
   1. **Phase 1: Lock (Gate Closure before Task Implementation):** Before starting substantive work or authoring any implementation commits for a new independent task, transition the handoff record from `synchronized` to `pending` (declaring the new canonical task identity and `task status: in_progress`) and **immediately author an atomic Git commit recording the closed gate** (e.g., `chore(handoff): close transition gate (pending) . T-<id>`). Leaving `fiss synchronization: pending` uncommitted in the working tree across implementation commits is strictly prohibited. From `pending`, continue only the work item already identified there; from `unresolved`, do not start different work until the blocker is resolved. If state or work identity cannot be determined, stop and resolve the ambiguity. Do not mistake continuation for a new task.
   2. **Phase 2: Prepare (Execution, Context Refresh, Verification & Policy Evaluation):** Substantive implementation proceeds while the gate is closed (`pending`). Upon concluding implementation:
      - Conduct the mandatory 7-point context refresh audit (subject knowledge, project knowledge, ADRs, risks, open questions, subject terminology, project terminology) and integrate durable outcomes.
@@ -41,7 +51,7 @@ This skill operates strictly on an **existing FISS intellectual space**. If the 
   3. **Phase 3: Release (Gate Opening upon Authorization):** Once authorized (or autonomously if permitted by project policy):
      - Transition the handoff record to `fiss synchronization: synchronized` and `task status: completed`.
      - **Immediately author an atomic Git commit recording the opened gate** (e.g., `chore(handoff): open transition gate (synchronized) . T-<id>`).
-- **Principle 6 Maintenance Invariant:** A completed task remains `pending` until all 7 context refresh dimensions are audited, durable outcomes captured or delegated, no-persistence classifications justified, and fresh evidence from `fiss-lint --strict` confirms zero defects.
+- **Principle 6 Maintenance Invariant (for FISS-Relevant Work):** A completed task that produced FISS-relevant outcomes remains `pending` until all 7 context refresh dimensions are audited, durable outcomes captured or delegated, no-persistence classifications justified, and fresh evidence from `fiss-lint --strict` confirms zero defects. Operational work that produced no FISS-relevant outcomes leaves the synchronization state unchanged and does not require the 7-point audit or gate transitions.
 - Mechanical verification of the intellectual space is delegated to `fiss-lint` (or `fiss-validate`). `fiss-maintain` MUST NOT perform manual link-by-link checking or duplicate linter rules; before declaring a space synchronized, run `fiss-lint --strict` (or `fiss-validate`) to obtain fresh observable verification evidence.
 
 ---
@@ -161,7 +171,12 @@ fiss synchronization: pending | synchronized | unresolved
 
 ## Capture and Handoff
 
-Treat work completion as `pending` until handoff is complete. Inspect the actual result, not only the requested file diff. For every result with plausible durable value, assign exactly one class:
+**First, classify the work:** Determine whether the completed work produced FISS-relevant outcomes. Consult `FISS/knowledge/project/work-classification.md` when it exists. If the work class is novel or ambiguous, update that document.
+
+- **Operational work (no FISS-relevant outcomes):** Leaves synchronization state unchanged. No 7-point audit, no gate transitions, no handoff artifact updates required. Document the classification decision in the task completion report.
+- **FISS-relevant work:** Requires handoff completion. Treat work completion as `pending` until handoff is complete.
+
+For FISS-relevant work, inspect the actual result, not only the requested file diff. For every result with plausible durable value, assign exactly one class:
 
 | Class | Action | Ownership |
 |---|---|---|
@@ -174,6 +189,17 @@ No persistence is never an implicit “probably unimportant” choice. It requir
 ---
 
 ## Analyze before Mutation
+
+**Step 0: Classify Work (FISS-Relevant vs Operational)**
+
+Before applying handoff procedures, determine work classification:
+1. Read `FISS/knowledge/project/work-classification.md` if it exists
+2. Did this work change: domain rules, architecture, process, decisions, risks, FISS structure, or navigation?
+3. If YES → FISS-relevant (proceed with full handoff protocol below)
+4. If NO → Operational (document decision, leave state unchanged, finish)
+5. If AMBIGUOUS or NOVEL work class → Update `work-classification.md` with the pattern
+
+**For FISS-Relevant Work:**
 
 Separate **evidence**, **decision**, and **mutation**. During evidence collection, do not edit files. Then produce a small decision set containing affected paths, affected invariants, preservation obligations, selected action, required approval, and verification command or observable check.
 
@@ -218,6 +244,14 @@ For a batch or destructive migration, use a work packet with `Objective`, `Scope
 
 ## Verify and Hand Off
 
+**For Operational Work (No FISS-Relevant Outcomes):**
+- Document the classification decision and rationale
+- No handoff gate transitions required
+- No 7-point audit required
+- Report: `OPERATIONAL WORK: No FISS integration required`
+
+**For FISS-Relevant Work:**
+
 Choose verification based on the affected invariants and delegate mechanical checks directly to `fiss-lint`:
 
 1. **Deterministic Verification via `fiss-lint`:**
@@ -241,10 +275,11 @@ Only after fresh command output from `fiss-lint` confirms zero defects and all o
 Report format:
 
 ```text
-Synchronization: synchronized | pending (awaiting confirmation) | unresolved
+Work classification: FISS-relevant | operational
+Synchronization: synchronized | pending (awaiting confirmation) | unresolved | unchanged (operational)
 FISS conformance: verified | not verified | failed
 FISS change: applied | not required | blocked
-Gate release policy: autonomous | human confirmation required (<override path>)
+Gate release policy: autonomous | human confirmation required (<override path>) | not applicable (operational)
 Evidence: commands/checks (e.g. fiss-lint --strict), affected paths, and relevant results
 ```
 
