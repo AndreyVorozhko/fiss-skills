@@ -1,13 +1,13 @@
 ---
 name: fiss-init
-description: Initializes a new conforming FISS intellectual space from scratch in a repository. Scaffolds root files (FISS/INDEX.md, BOOTSTRAP.md), establishes entry points, discovers task workflows, configures handoff mechanisms and Principle 6 continuity policies, and verifies the baseline with fiss-lint. Use when a repository does not have a conforming FISS space. Unlike fiss-maintain, owns 0-to-1 space initialization rather than Day 2 maintenance.
+description: Initializes a new conforming FISS intellectual space from scratch in a repository. Scaffolds root files (FISS/INDEX.md, BOOTSTRAP.md), analyzes project to discover work classes (FISS-relevant vs operational), creates work classification taxonomy, establishes entry points, discovers task workflows, configures handoff mechanisms and Principle 6 continuity policies, and verifies the baseline with fiss-lint. Use when a repository does not have a conforming FISS space. Unlike fiss-maintain, owns 0-to-1 space initialization rather than Day 2 maintenance.
 ---
 
 # FISS Init
 
 ## Responsibility
 
-Initialize a conforming File-based Intellectual Space Standard (FISS v1.0.0) space from scratch in a repository. The skill owns the 0-to-1 bootstrap boundary: creating the root entry points, discovering existing task and state mechanisms, resolving the logical handoff representation, establishing standard Principle 6 continuity mechanisms, configuring agent entry points, and verifying the initial baseline with `fiss-lint`.
+Initialize a conforming File-based Intellectual Space Standard (FISS v1.0.0) space from scratch in a repository. The skill owns the 0-to-1 bootstrap boundary: creating the root entry points, **analyzing the project to discover work classes (FISS-relevant vs operational)**, creating `FISS/knowledge/project/work-classification.md` with initial taxonomy, discovering existing task and state mechanisms, resolving the logical handoff representation, establishing standard Principle 6 continuity mechanisms (applying gate and audit only to FISS-relevant work), configuring agent entry points, and verifying the initial baseline with `fiss-lint`.
 
 Use this skill when:
 - The repository does not yet have a FISS intellectual space (`FISS/` directory, `FISS/INDEX.md`, or `FISS/BOOTSTRAP.md` is absent).
@@ -24,15 +24,23 @@ Once the initial space is verified and synchronized, subsequent Day 2 operations
    - If human-oriented materials are created, they MUST be partitioned strictly into `FISS/human/knowledge/` and/or `FISS/human/hmm/` (never loose files directly in `FISS/human/`).
    - If state registries (ADRs, risks, open questions) are maintained, structure them as composite areas with `INDEX.md` or consolidated single files (never scattered loose files in `FISS/state/`).
 4. **Canonical Source Invariant:** The handoff representation records FISS synchronization, not a competing task tracker. If the repository uses an external task or state mechanism (e.g. GitHub Issues, Taiga, Jira), reference that canonical task identity rather than duplicating backlogs or statuses in FISS.
-5. **Principle 6 Continuity Invariant:** When initializing a new FISS intellectual space, if the user or project has not specified a custom Handoff Gate & Intellectual Space Refresh mechanism, `fiss-init` MUST autonomously introduce a standard, robust mechanism adapted to the project context (in workflow documentation, overrides, agent entry files, or handoff templates) to satisfy FISS Principle 6 (Continuous: timely capturing and preserving useful context changes). This mechanism MUST prescribe:
-   - The two-phase Git-committed handoff gate protocol:
+5. **Work Classification Taxonomy Invariant:** `fiss-init` MUST analyze the repository to discover project-specific work classes and create `FISS/knowledge/project/work-classification.md` with initial taxonomy distinguishing FISS-relevant work (changes what the space represents) from operational work (uses space as context). This analysis MUST:
+   - Inspect repository structure, documentation, issue tracker, and commit history for work patterns
+   - Identify at least 2-3 concrete examples for each work class discovered
+   - Create the classification document with work types, descriptions, examples, and decision tree
+   - Link to this document from `FISS/knowledge/project/INDEX.md` with read condition: `Read when: completing any task or classifying work outcomes`
+   - Enable agents to correctly classify future work and apply handoff procedures only to FISS-relevant outcomes
+6. **Principle 6 Continuity Invariant:** When initializing a new FISS intellectual space, if the user or project has not specified a custom Handoff Gate & Intellectual Space Refresh mechanism, `fiss-init` MUST autonomously introduce a standard, robust mechanism adapted to the project context (in workflow documentation, overrides, agent entry files, or handoff templates) to satisfy FISS Principle 6 (Continuous: timely capturing and preserving useful context changes). This mechanism MUST prescribe:
+   - **Clarification for FISS v1.0.0:** The three-phase handoff gate protocol and 7-point context refresh audit apply ONLY to FISS-relevant work (work that changes information, rules, state, or relationships that the intellectual space represents and preserves). Operational work (work that uses the intellectual space as context without changing what it represents) leaves the synchronization state unchanged and does not require gate transitions or the 7-point audit.
+   - The three-phase Git-committed handoff gate protocol for FISS-relevant work:
      - **Phase 1 (Lock):** Closing the gate with an atomic Git commit (`fiss synchronization: pending`) before starting task implementation;
      - **Phase 2 (Prepare):** Capturing/refreshing durable context across 7 dimensions (subject knowledge, project knowledge, ADRs, risks, open questions, subject terminology, project terminology), verifying with `fiss-lint --strict`, and checking gate release policy;
      - **Phase 3 (Release):** Opening the gate with an atomic Git commit (`fiss synchronization: synchronized`) once authorized (autonomously or upon required human/external confirmation).
    - Scaffolding the handoff artifact with the three outcome classifications (`Capture here`, `Delegate`, `No persistence`).
+   - An explicit notation that gate transitions and 7-point audit apply only to FISS-relevant work.
    - An explicit notification to the user in the initialization report.
-6. **Agent Entry Integration Invariant:** If `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or another agent configuration file exists in the repository root, verify or configure it to mandate that agents read `FISS/INDEX.md` and strictly consult `FISS/BOOTSTRAP.md` before project work.
-7. **Verification Invariant:** Initialization is never complete without fresh observable evidence from `fiss-lint --strict .` confirming zero errors and zero warnings.
+7. **Agent Entry Integration Invariant:** If `AGENTS.md`, `CLAUDE.md`, `.cursorrules`, or another agent configuration file exists in the repository root, verify or configure it to mandate that agents read `FISS/INDEX.md` and strictly consult `FISS/BOOTSTRAP.md` before project work.
+8. **Verification Invariant:** Initialization is never complete without fresh observable evidence from `fiss-lint --strict .` confirming zero errors and zero warnings.
 
 ---
 
@@ -55,7 +63,7 @@ Before mutating files, inspect the repository environment:
 
 ## Initialization Procedure
 
-Execute initialization in six sequential steps:
+Execute initialization in seven sequential steps:
 
 ### Step 1: Scaffold Root Files
 
@@ -74,7 +82,39 @@ Create the minimal conforming root structure:
    - State the project mission, high-level scope, and navigation instructions.
    - Explicitly instruct agents and developers to consult `FISS/INDEX.md` for situational routing and to respect the handoff gate.
 
-### Step 2: Resolve Logical Handoff Representation
+### Step 2: Analyze Project and Create Work Classification Taxonomy
+
+Discover project-specific work classes to distinguish FISS-relevant from operational work:
+
+1. **Analyze Repository:**
+   - Inspect `README.md`, `CONTRIBUTING.md`, documentation for project description and workflows
+   - Review recent commit messages and branch names for work patterns
+   - Check issue tracker (if accessible) for task types
+   - Examine directory structure for domain signals (e.g., `catalog/`, `mcp/`, `api/`)
+2. **Identify Work Classes:**
+   - FISS-relevant work examples: architecture changes, domain rule changes, process changes, decision/risk recording, FISS structure changes
+   - Operational work examples: content operations, feature implementation within existing design, data updates
+   - Discover at least 2-3 concrete project-specific examples for each class
+3. **Create `FISS/knowledge/project/` directory structure:**
+   - Ensure `FISS/knowledge/project/` directory exists (or prepare to create `FISS/knowledge/project.md` if single-file area)
+   - If composite area, create `FISS/knowledge/project/INDEX.md`
+4. **Create `FISS/knowledge/project/work-classification.md`:**
+   - Use the template structure: Purpose, Work Classes (FISS-Relevant/Operational tables), Classification Decision Tree, Guidelines, Maintenance
+   - Populate with discovered project-specific work types and concrete examples
+   - Include decision tree for classification
+5. **Link from root index:**
+   - Add link to `FISS/knowledge/project/` (or `project.md`) in `FISS/INDEX.md` with read condition:
+     ```markdown
+     - [Project Knowledge](knowledge/project/INDEX.md)
+       Read when: working on project architecture, process, or completing any task
+     ```
+   - If composite area, link to `work-classification.md` from `knowledge/project/INDEX.md` with read condition:
+     ```markdown
+     - [Work Classification](work-classification.md)
+       Read when: completing any task or classifying work outcomes
+     ```
+
+### Step 3: Resolve Logical Handoff Representation
 
 Resolve the logical handoff representation using the operational-artifact cascade:
 1. If project conventions or configuration specify a path, use it.
