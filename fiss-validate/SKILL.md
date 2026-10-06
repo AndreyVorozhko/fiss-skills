@@ -1,6 +1,6 @@
 ---
 name: fiss-validate
-description: Validates an existing FISS intellectual space for conformance and architectural invariants without mutating files. Use when auditing FISS, verifying conformance before or after maintenance, checking used-area reachability, broken navigation, drift, or rule violations. Unlike fiss-maintain, performs read-only verification without state mutation or structural repair.
+description: Validates an existing FISS intellectual space for conformance and architectural invariants without mutating files. Verifies work classification taxonomy, checks that handoff gate requirements apply only to FISS-relevant work, and validates that operational work correctly bypasses gate transitions. Use when auditing FISS, verifying conformance before or after maintenance, checking used-area reachability, broken navigation, drift, or rule violations. Unlike fiss-maintain, performs read-only verification without state mutation or structural repair.
 ---
 
 # FISS Validate
@@ -9,15 +9,16 @@ description: Validates an existing FISS intellectual space for conformance and a
 
 `fiss-validate` is a portable, strictly **read-only** skill that establishes and proves the state of an existing FISS (File-based Intellectual Space Standard) intellectual space against:
 
-1. Applicable normative FISS requirements;
+1. Applicable normative FISS v1.0.0 requirements;
 2. The seven architectural principles (7C: Compact, Context-aware, Context-first, Classified, Canonical, Continuous, Composable);
-3. Project-specific rules explicitly declared through `FISS/overrides/`.
+3. **FISS-relevant outcome classification model:** Verifies that work classification taxonomy exists, that handoff gate and 7-point audit apply only to FISS-relevant work, and that operational work correctly bypasses gate transitions;
+4. Project-specific rules explicitly declared through `FISS/overrides/`.
 
 The primary mission:
 
-> **Verify and prove whether the existing intellectual space conforms to applicable requirements and whether preserved context remains discoverable.**
+> **Verify and prove whether the existing intellectual space conforms to applicable requirements, whether preserved context remains discoverable, and whether the work classification model is correctly applied.**
 
-`fiss-validate` **does not mutate files, does not take architectural decisions, does not repair broken links, does not pick canonical sources, and does not determine what knowledge should have been captured.**
+`fiss-validate` **does not mutate files, does not take architectural decisions, does not repair broken links, does not pick canonical sources, does not determine what knowledge should have been captured, and does not classify work outcomes**.
 
 ### Division of Responsibility
 
@@ -48,7 +49,13 @@ The primary mission:
     - `ERROR`: Reserved for a proven `FAILED` breach of an applicable FISS `MUST` or `MUST NOT`; it invalidates FISS conformance in the evaluated scope.
    - `WARNING`: Significant architectural smell or drift risk.
    - `INFO`: Advisory suggestion or minor stylistic observation.
-7. **Continuous and Handoff Boundary:** Principle Continuous is evaluated as discoverability of preserved context, reachability of used areas, conformance to the FISS Handoff Protocol, and the presence of an observable operational mechanism for timely capturing useful context changes. The validator checks observable handoff state, artifact resolution, transition-record consistency, whether the project defines an observable rule requiring the handoff gate closure (`fiss synchronization: pending`) to be committed to version control before task work begins, and whether the project defines a discoverable workflow gate, checklist, or protocol ensuring that knowledge is refreshed before synchronization. It NEVER attempts to prove the negative ("all project knowledge was captured"), which is epistemically impossible from static inspection. Deciding what specific knowledge to capture, where to integrate it, and executing state mutations belongs exclusively to `fiss-maintain` or the project maintainer.
+7. **Continuous and Handoff Boundary (FISS v1.0.0 Model):** Principle Continuous is evaluated as discoverability of preserved context, reachability of used areas, conformance to the FISS Handoff Protocol, and the presence of an observable operational mechanism for timely capturing useful context changes. **FISS v1.0.0 clarification:** The three-phase handoff gate and 7-point context refresh audit apply ONLY to FISS-relevant work (work that changes information, rules, state, or relationships that the intellectual space represents and preserves). Operational work (work that uses the intellectual space as context without changing what it represents) leaves the synchronization state unchanged and does not require gate transitions or the 7-point audit. The validator checks:
+   - Existence and discoverability of `FISS/knowledge/project/work-classification.md` (or equivalent project taxonomy)
+   - Observable handoff state, artifact resolution, transition-record consistency
+   - Whether the project defines an observable rule requiring handoff gate closure (`fiss synchronization: pending`) to be committed to version control before FISS-relevant task work begins
+   - Whether the project defines a discoverable workflow gate, checklist, or protocol ensuring that knowledge is refreshed before synchronization for FISS-relevant work
+   - Whether operational work correctly bypasses gate transitions and maintains `synchronized` state
+   - It NEVER attempts to prove the negative ("all project knowledge was captured"), which is epistemically impossible from static inspection. Deciding what specific knowledge to capture, where to integrate it, classifying work outcomes, and executing state mutations belongs exclusively to `fiss-maintain` or the project maintainer.
 8. **Canonical and Derived Knowledge:** Knowledge without `Derived from:` is canonical by default; never require a separate canonical marker. Derived knowledge MUST use the exact, non-localized marker `Derived from:` followed by Markdown links to all material sources. Every HMM content material in `FISS/human/hmm/`, and the single-file area `FISS/human/hmm.md`, is derived and MUST satisfy this rule; a navigation-only HMM `INDEX.md` is not content. The same knowledge MUST NOT have multiple independently maintained canonical sources. When competing sources lack a precedence rule, emit `UNRESOLVED`; never select a source by recency, file size, or guesswork.
 9. **Syntax Scoping (CommonMark Fence Isolation):** Fenced code blocks (` ``` ` and `~~~`) MUST be stripped or ignored before extracting links, headers, or structural directives to prevent false positives from code examples.
 10. **Fresh Verification Law:** Claims of conformance MUST be grounded in fresh checks executed during the current run. Previous agent statements or static assumptions are not evidence.
@@ -166,22 +173,31 @@ Evaluate qualitative properties requiring contextual comprehension. Express find
    - Verify that FISS does not duplicate the internal state of external trackers (e.g., duplicating entire issue backlogs in `state/`).
    - Redundant external tracker duplication $\longrightarrow$ `ADVISORY: Competing Tracker in FISS`.
 7. **Continuous Context Maintenance & Handoff Gate Protocol (Continuous, `FISS-CONTINUOUS-MECH`):**
-   - Verify whether the project defines an observable operational mechanism, rule, or workflow policy for timely capturing useful context changes into the intellectual space, and whether the two-phase Git-committed handoff gate protocol is anchored.
-   - Signals of missing, unanchored, or bypassed handoff gate mechanism:
-     - **Missing Gate Closure Rule:** The project lacks a documented requirement in `workflow.md`, `overrides/`, `BOOTSTRAP.md`, or `AGENTS.md` mandating that the handoff gate be closed with an atomic Git commit (`fiss synchronization: pending`) before starting task implementation.
-     - **Bypassed / Uncommitted Gate:** An active task is in progress, but the handoff artifact is uncommitted or dirty in the working tree, or Git history reveals tasks transitioning directly between `synchronized` states without an observable committed `pending` checkpoint.
-     - **Unanchored Context Refresh:** Tasks are closed or declared `synchronized` without any classification of outcomes (`Capture here`, `Delegate`, `No persistence`) or without documented 7-point audit checks.
-     - **Missing Knowledge Maintenance Directives:** Neither `workflow.md`, `overrides/`, `BOOTSTRAP.md`, nor `AGENTS.md` prescribes an operational knowledge synchronization step (such as invoking `fiss-maintain` or specialized refresh skills).
+   - **FISS v1.0.0 Clarification:** Verify that the three-phase handoff gate and 7-point context refresh audit apply ONLY to FISS-relevant work (work that changes what the space represents), and that operational work (using space as context) correctly bypasses gate transitions.
+   - Verify whether the project defines:
+     - `FISS/knowledge/project/work-classification.md` (or equivalent) distinguishing FISS-relevant from operational work with concrete examples
+     - Observable operational mechanism for timely capturing useful context changes for FISS-relevant work
+     - Two-phase Git-committed handoff gate protocol anchored for FISS-relevant work
+   - Signals of missing, unanchored, or incorrectly applied handoff gate mechanism:
+     - **Missing Work Classification Taxonomy:** The project lacks `FISS/knowledge/project/work-classification.md` or equivalent documented distinction between FISS-relevant and operational work classes.
+     - **Missing Gate Closure Rule:** The project lacks a documented requirement in `workflow.md`, `overrides/`, `BOOTSTRAP.md`, or `AGENTS.md` mandating that the handoff gate be closed with an atomic Git commit (`fiss synchronization: pending`) before starting FISS-relevant task implementation.
+     - **Overapplied Gate (False Positive):** Project documentation or handoff records show gate transitions for operational work that produced no FISS-relevant outcomes.
+     - **Bypassed / Uncommitted Gate:** An active FISS-relevant task is in progress, but the handoff artifact is uncommitted or dirty in the working tree, or Git history reveals FISS-relevant tasks transitioning directly between `synchronized` states without an observable committed `pending` checkpoint.
+     - **Unanchored Context Refresh:** FISS-relevant tasks are closed or declared `synchronized` without any classification of outcomes (`Capture here`, `Delegate`, `No persistence`) or without documented 7-point audit checks.
+     - **Missing Knowledge Maintenance Directives:** Neither `workflow.md`, `overrides/`, `BOOTSTRAP.md`, nor `AGENTS.md` prescribes an operational knowledge synchronization step for FISS-relevant work (such as invoking `fiss-maintain` or specialized refresh skills).
    - Determinations:
-     - Absence of a documented rule requiring the handoff gate closure commit before task work $\longrightarrow$ `WARNING: Missing Handoff Gate Closure Rule` (or `FAILED: Unanchored Handoff Protocol` when strict handoff protocol compliance is evaluated).
-     - Bypassed or uncommitted handoff gate in Git history $\longrightarrow$ `WARNING: Bypassed Handoff Transition Gate`.
-     - Absence of an operational context refresh mechanism $\longrightarrow$ `ADVISORY: Missing Continuous Context Maintenance Mechanism`.
+     - Absence of work classification taxonomy $\longrightarrow$ `WARNING: Missing Work Classification Taxonomy (FISS v1.0.0)`.
+     - Absence of a documented rule requiring the handoff gate closure commit before FISS-relevant task work $\longrightarrow$ `WARNING: Missing Handoff Gate Closure Rule` (or `FAILED: Unanchored Handoff Protocol` when strict handoff protocol compliance is evaluated).
+     - Gate transitions applied to operational work $\longrightarrow$ `WARNING: Handoff Gate Overapplied to Operational Work`.
+     - Bypassed or uncommitted handoff gate in Git history for FISS-relevant work $\longrightarrow$ `WARNING: Bypassed Handoff Transition Gate`.
+     - Absence of an operational context refresh mechanism for FISS-relevant work $\longrightarrow$ `ADVISORY: Missing Continuous Context Maintenance Mechanism`.
    - **Context-Aware Remedy Hint Synthesis:** The validator MUST tailor its remedy hint to the project's existing structure and available toolchain:
-     - *If missing gate closure rule:* Recommend adding an explicit rule in `knowledge/project/workflow.md`, `overrides/`, or `BOOTSTRAP.md` mandating an atomic Git commit `chore(handoff): close transition gate (fiss synchronization: pending)` before task code is authored.
-     - *If project has workflow documentation (e.g., `knowledge/project/workflow.md`):* Recommend integrating the full two-phase Git-committed transition gate protocol: Phase 1 (closing gate via commit before implementation) and Phase 2 (opening gate via commit after verification and 7-point context refresh audit).
-     - *If project defines overrides (e.g., `FISS/overrides/`):* Recommend adding an explicit transition override requiring knowledge synchronization, gate closure commit, and outcome classification (`Capture here` / `Delegate` / `No persistence`) at task checkpoints.
-     - *If project defines agent instructions (`AGENTS.md`):* Recommend directing agents to invoke `fiss-maintain` before starting and upon concluding tasks.
-     - *If project uses task handoff (`fiss-handoff.md`):* Recommend structuring the handoff record with explicit durable outcome classifications.
+     - *If missing work classification:* Recommend creating `FISS/knowledge/project/work-classification.md` using `fiss-init` or `fiss-maintain` with project-specific work types and concrete examples distinguishing FISS-relevant from operational work.
+     - *If missing gate closure rule:* Recommend adding an explicit rule in `knowledge/project/workflow.md`, `overrides/`, or `BOOTSTRAP.md` mandating an atomic Git commit `chore(handoff): close transition gate (fiss synchronization: pending)` before FISS-relevant task code is authored, and clarifying that operational work bypasses gate transitions.
+     - *If project has workflow documentation (e.g., `knowledge/project/workflow.md`):* Recommend integrating the full three-phase Git-committed transition gate protocol applying only to FISS-relevant work: Phase 1 (closing gate via commit before implementation), Phase 2 (7-point audit and outcome classification), and Phase 3 (opening gate via commit after verification).
+     - *If project defines overrides (e.g., `FISS/overrides/`):* Recommend adding an explicit transition override requiring knowledge synchronization, gate closure commit, and outcome classification (`Capture here` / `Delegate` / `No persistence`) at FISS-relevant task checkpoints.
+     - *If project defines agent instructions (`AGENTS.md`):* Recommend directing agents to invoke `fiss-maintain` before starting and upon concluding FISS-relevant tasks, with work classification as first step.
+     - *If project uses task handoff (`fiss-handoff.md`):* Recommend structuring the handoff record with explicit durable outcome classifications and work classification field.
 
 ### Stage 4: Evidence Assembly & Reporting
 
