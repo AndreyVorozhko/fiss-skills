@@ -31,6 +31,13 @@ This repository is part of the FISS tooling ecosystem alongside the [fiss-lint](
 * **Five-Status Model:** Classifies findings into granular verdicts (`VERIFIED`, `FAILED`, `UNRESOLVED`, `INSUFFICIENT_EVIDENCE`, `ADVISORY`) with exact file and line citations.
 * **Tooling Delegation:** Offloads deterministic mechanical checks to the `fiss-lint` CLI, focusing on semantic evaluation.
 
+### 4. [`fiss-review`](fiss-review/SKILL.md)
+**Strictly read-only substantive reality auditor.** Audits an existing FISS space against factual project reality (code, infrastructure, observable behavior, tests, configs).
+
+* **Substantive Claim Verification:** Cross-checks architectural invariants, interface contracts, and performance guarantees against actual implementation code and configurations.
+* **Two-Sided Grounding:** Pairs every reported discrepancy with exact bilateral coordinates (`FISS/<path>:<line>` vs `<code_path>:<line>`) and verbatim snippets.
+* **Epistemic Certainty Model:** Distinguishes verified defects, probable issues, unconfirmed guarantees, and epistemic conflicts without subjective confidence averaging.
+
 ---
 
 ## Division of Responsibility
@@ -39,6 +46,7 @@ This repository is part of the FISS tooling ecosystem alongside the [fiss-lint](
 |---|---|:---:|---|
 | **[fiss-lint](https://github.com/AndreyVorozhko/fiss-lint)** | CLI linter | No | Deterministic mechanical checks: paths, syntax, link validity, and required markers |
 | **`fiss-validate`** | AI audit skill | No | Semantic audit, context integrity, and evidence-backed verification of architectural principles |
+| **`fiss-review`** | AI reality audit skill | No | Substantive audit: verifies knowledge claims against code, tests, configs, and observable behavior |
 | **`fiss-init`** | AI initialization skill | **Yes** | 0-to-1 bootstrapping: scaffolds root files, establishes entry points and Principle 6 continuity |
 | **`fiss-maintain`** | AI maintenance skill | **Yes** | Day 2 maintenance: manages 3-phase handoff gate, integrates task outcomes, updates navigation |
 
